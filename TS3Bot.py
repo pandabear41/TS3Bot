@@ -10,6 +10,7 @@ import sys
 def main_loop():
     tn = telnet.telnet()
     tn.connect()
+    tn.clientlist()
     
     while 1:
         time.sleep(0.1)

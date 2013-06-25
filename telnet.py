@@ -2,27 +2,25 @@ import telnetlib
 import ConfigParser
 import sys
 
-#Get config
-Config = ConfigParser.RawConfigParser(allow_no_value=False)
-Config.read('config.ini')
-
-#Read config properties
-User = Config.get('config', 'server_query_user')
-Pass = Config.get('config', 'server_query_pass')
-Host = Config.get('config', 'server_address')
-Port = Config.get('config', 'server_query_port')
-VID = Config.get('config', 'virtualserver_id')
-
-#Set command accepted message
+tn = telnetlib.Telnet()
 accepted = "\n\rerror id=0 msg=ok"
 
-tn = telnetlib.Telnet(Host, Port)   #connect to server
-    
 class telnet():
-    def connect(self):    
+    def connect(self):
+        #Get config file
+        Config = ConfigParser.RawConfigParser(allow_no_value=False)
+        Config.read('config.ini')
+        
+        #Read config properties
+        User = Config.get('config', 'server_query_user')
+        Pass = Config.get('config', 'server_query_pass')
+        Host = Config.get('config', 'server_address')
+        Port = Config.get('config', 'server_query_port')
+        VID = Config.get('config', 'virtualserver_id')
 
-        msg = tn.read_until(".", 2)         #wait until the welcome message is displayed
-        sys.stdout.write(msg)               #print the welcome message
+        tn.open(Host, Port)
+        msg = tn.read_until(".", 2) #wait until the welcome message is displayed
+        sys.stdout.write(msg)       #print the welcome message
         
         tn.write("login " + User + " " + Pass + "\n")   #send login string
         msg = tn.read_until(accepted, 2)                #wait for login to be accepted or denied
@@ -39,7 +37,8 @@ class telnet():
                 tn.read_until(accepted, 2)
                 tn.write("quit\n")
                 return False
-                
+            
+            #if virtual server is successfully selected print message to screen
             sys.stdout.write(msg.replace("\s"," "))
             return True
         else:
@@ -47,4 +46,25 @@ class telnet():
             sys.stdout.write(msg.replace("\s", " "))
             tn.write("quit\n")
             return False
+        
+        
+    def clientlist(self):
+        tn.write("clientlist\n")
+        msg = tn.read_until(accepted, 2)
+        msg = msg.replace(accepted, "")
+        msg = msg.replace("\n\r", "")
+        msg = msg.replace("|", " ")
+        msg = msg.split(' ')
+        
+        clist = []
+        for client in msg:
+            if client.find('clid=') > -1:
+                client = client.replace("clid=", "")
+                clist.append(client)
+                
+        return clist
+        
+        
+        
+        
         
