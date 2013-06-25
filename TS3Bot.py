@@ -9,9 +9,9 @@ import sys
     
 def main_loop():
     tn = telnet.telnet()
-    tn.connect()
-    tn.clientlist()
-    
+    if tn.connect() == True:
+        tn.idletime(tn.clientlist())
+        
     while 1:
         time.sleep(0.1)
            

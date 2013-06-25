@@ -49,8 +49,11 @@ class telnet():
         
         
     def clientlist(self):
+        #send the clientlist command and get the output
         tn.write("clientlist\n")
         msg = tn.read_until(accepted, 2)
+        
+        #remove the command accepted string, and replace line breaks and vertical bars with spaces
         msg = msg.replace(accepted, "")
         msg = msg.replace("\n\r", "")
         msg = msg.replace("|", " ")
@@ -59,12 +62,23 @@ class telnet():
         clist = []
         for client in msg:
             if client.find('clid=') > -1:
-                client = client.replace("clid=", "")
-                clist.append(client)
+                clist.append(client.replace("clid=", ""))
                 
         return clist
         
         
+    def idletime(self, client):
+        tn.write("clientinfo clid=" + client + "\n")
+        msg = tn.read_until(accepted, 2)
+        msg = msg.replace(accepted, "")
+        msg = msg.replace("\n\r", "")
+        msg = msg.split(' ')
         
+        for idletime in msg:
+            if idletime.find("client_idle_time=") > -1:
+                break
+        
+        print client
+        return client
         
         
