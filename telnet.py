@@ -1,7 +1,7 @@
 import telnetlib
 import ConfigParser
 import sys
-        
+
 class telnet():
     def connect(self):
         #Get config
@@ -17,7 +17,7 @@ class telnet():
         
         #Set command accepted message
         accepted = "ok"
-        acptptmsg = "\n\rerror id=0 msg=ok"
+        acceptmsg = "\n\rerror id=0 msg=ok"
         
         tn = telnetlib.Telnet(Host, Port)   #connect to server
         msg = tn.read_until(".", 2)         #wait until the welcome message is displayed
@@ -26,14 +26,17 @@ class telnet():
         tn.write("login " + User + " " + Pass + "\n")   #send login string
         msg = tn.read_until(accepted, 2)                #wait for login to be accepted or denied
        
-        if msg == acptptmsg:              #if login is accepted accepted
+        if msg == acceptmsg:                        #if login is accepted
             sys.stdout.write(msg.replace("\s"," ")) #output message to console
             tn.write("use " + VID + "\n")           #select the virtual server
-            msg = tn.read_until(accepted, 2)        #wait for the command to be accepted
+            msg = tn.read_until(accepted, 2)
             
-            if msg != acptptmsg:     #if command is not accepted disconnect and return false
+            #if command is not accepted disconnect and return false
+            if msg != acceptmsg:
                 sys.stdout.write("\n\rError selecting virtual server " + VID)
-                tn.write("quit")
+                tn.write("logout\n")
+                tn.read_until(accepted, 2)
+                tn.write("quit\n")
                 return False
                 
             sys.stdout.write('"' + msg.replace("\s"," ") + "'")
@@ -43,5 +46,3 @@ class telnet():
             sys.stdout.write(msg.replace("\s", " "))
             tn.write("quit\n")
             return False
-    
-        #print tn.read_all().replace("\s", " ")
