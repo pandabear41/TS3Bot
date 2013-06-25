@@ -2,6 +2,7 @@
 ## Eclipse
 #################
 
+config.ini
 *.pydevproject
 .project
 .metadata
@@ -40,7 +41,6 @@ local.properties
 *.suo
 *.user
 *.sln.docstates
-config.ini
 
 # Build results
 
