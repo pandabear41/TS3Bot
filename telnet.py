@@ -4,13 +4,11 @@ import sys
 
 tn = telnetlib.Telnet()
 accepted = "\n\rerror id=0 msg=ok"
+Config = ConfigParser.RawConfigParser(allow_no_value=False)
+Config.read('config.ini')
 
 class telnet():
-    def connect(self):
-        #Get config file
-        Config = ConfigParser.RawConfigParser(allow_no_value=False)
-        Config.read('config.ini')
-        
+    def connect(self):  
         #Read config properties
         User = Config.get('config', 'server_query_user')
         Pass = Config.get('config', 'server_query_pass')
@@ -53,13 +51,15 @@ class telnet():
         tn.write("clientlist\n")
         msg = tn.read_until(accepted, 2)
         
-        #remove the command accepted string, and replace line breaks and vertical bars with spaces
+        #remove the command accepted string
         msg = msg.replace(accepted, "")
-        msg = msg.replace("\n\r", "")
-        msg = msg.replace("|", " ")
+        
+        msg = msg.replace("\n\r", "")   #remove line breaks
+        msg = msg.replace("|", " ")     #replace vertical bars with spaces
         msg = msg.split(' ')
         
         clist = []
+        #get all client ids
         for client in msg:
             if client.find('clid=') > -1:
                 clist.append(client.replace("clid=", ""))
@@ -68,17 +68,31 @@ class telnet():
         
         
     def idletime(self, client):
+        #send clientinfo command and get the output
         tn.write("clientinfo clid=" + client + "\n")
         msg = tn.read_until(accepted, 2)
-        msg = msg.replace(accepted, "")
-        msg = msg.replace("\n\r", "")
+        
+        msg = msg.replace(accepted, "") #remove accepted message
+        msg = msg.replace("\n\r", "")   #remove line breaks
         msg = msg.split(' ')
         
         for idletime in msg:
             if idletime.find("client_idle_time=") > -1:
+                idletime = idletime.replace("client_idle_time=", "")
                 break
+            else:
+                idletime = -1
+                
+        return int(idletime)
         
-        print client
-        return client
+        
+    def move(self, client):
+        cid = Config.get('config', 'channel_id')
+        tn.write("clientmove clid=" + client + " cid=" + cid)
+        tn.read_until(accepted, 2)
+        sys.stdout.write("/n/ruser moved")
+        
+        
+        
         
         
