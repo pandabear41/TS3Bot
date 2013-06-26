@@ -4,27 +4,28 @@ Created on Jun 24, 2013
 @author: TReische
 '''
 import time
-import telnet
 import sys
 import datetime
+import teamspeak
     
 def main_loop():
-    tn = telnet.telnet()
-    tn.connect()
-    
+    ts = teamspeak.TS3()
+    ts.connect()
 
     while 1:
         seconds = int(datetime.datetime.now().strftime('%S')) % 30
         
         if seconds == 0:
-            clist = tn.clientlist()
-    
+            clist = ts.clientlist()
+
             for client in clist:
-                idletime = tn.idletime(client)
+                #get client idle time and convert to minutes
+                idletime = ts.idletime(client)
                 idletime = idletime / 60000
+                
                 if idletime >= 1:
-                    time.sleep(1)
-                    tn.move(client)
+                    time.sleep(1)   #wait 1 second between commands to prevent autoban
+                    ts.move(client)
                     print "/n/rmoved client"
             
         time.sleep(0.1)

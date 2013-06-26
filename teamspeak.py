@@ -7,7 +7,7 @@ accepted = "\n\rerror id=0 msg=ok"
 Config = ConfigParser.RawConfigParser(allow_no_value=False)
 Config.read('config.ini')
 
-class telnet():
+class TS3():
     def connect(self):  
         #Read config properties
         User = Config.get('config', 'server_query_user')
@@ -76,6 +76,7 @@ class telnet():
         msg = msg.replace("\n\r", "")   #remove line breaks
         msg = msg.split(' ')
         
+        #find the client idle time
         for idletime in msg:
             if idletime.find("client_idle_time=") > -1:
                 idletime = idletime.replace("client_idle_time=", "")
@@ -87,7 +88,7 @@ class telnet():
         
         
     def move(self, client):
-        cid = Config.get('config', 'channel_id')
+        cid = Config.get('config', 'afk_channel_id')
         tn.write("clientmove clid=" + client + " cid=" + cid)
         tn.read_until(accepted, 2)
         sys.stdout.write("/n/ruser moved")
