@@ -1,27 +1,21 @@
 import telnetlib
-import ConfigParser
 import sys
-
-tn = telnetlib.Telnet()
-accepted = "\n\rerror id=0 msg=ok"
-Config = ConfigParser.RawConfigParser(allow_no_value=False)
-Config.read('config.ini')
-
-class tsclient(object):
-    clid = -1            #client id            (based on connection order)
-    cid = -1             #channel id           (current channel id)
-    servergroups = -1    #client_servergroups  (2,3,8)
-    away = -1            #client_away          (0|1)
-
+    
+class TS3Client():
+    clid = '0'             #client id            (based on connection order)
+    cid = '0'              #channel id           (current channel id)
+    idletime = 0           #client idle time     (milliseconds)
+    away = '0'             #client_away          (0|1)
+    servergroups = []      #client_servergroups  (2,3,8)
+    
 class TS3():
-    def connect(self):  
-        #Read config properties
-        User = Config.get('config', 'server_query_user')
-        Pass = Config.get('config', 'server_query_pass')
-        Host = Config.get('config', 'server_address')
-        Port = Config.get('config', 'server_query_port')
-        VID = Config.get('config', 'virtualserver_id')
-
+    tn = telnetlib.Telnet()
+    accepted = "\n\rerror id=0 msg=ok"
+    
+    def connect(self, User, Pass, Host, Port, VSID):
+        accepted = self.accepted
+        tn = self.tn
+        
         tn.open(Host, Port)
         msg = tn.read_until(".", 2) #wait until the welcome message is displayed
         sys.stdout.write(msg)       #print the welcome message
@@ -31,12 +25,12 @@ class TS3():
         
         if msg == accepted:                         #if login is accepted
             sys.stdout.write(msg.replace("\s"," ")) #output message to console
-            tn.write("use " + VID + "\n")           #select the virtual server
+            tn.write("use " + VSID + "\n")           #select the virtual server
             msg = tn.read_until(accepted, 2)
             
             #if command is not accepted disconnect and return false
             if msg != accepted:
-                sys.stdout.write("\n\rError selecting virtual server " + VID)
+                sys.stdout.write("\n\rError selecting virtual server " + VSID)
                 tn.write("logout\n")
                 tn.read_until(accepted, 2)
                 tn.write("quit\n")
@@ -54,69 +48,51 @@ class TS3():
         
     def clientlist(self):
         #send the clientlist command and get the output
-        tn.write("clientlist\n")
-        msg = tn.read_until(accepted, 2)
+        self.tn.write("clientlist\n")
+        msg = self.tn.read_until(self.accepted, 2)
         
-        #remove the command accepted string
-        msg = msg.replace(accepted, "")
-        
+        msg = msg.replace(self.accepted, "") #remove the command accepted string
         msg = msg.replace("\n\r", "")   #remove line breaks
         msg = msg.replace("|", " ")     #replace vertical bars with spaces
         msg = msg.split(' ')
         
         clist = []
-        
         #get all client ids and current channel ids
-        for cli in msg:
-            c = tsclient()
-            
-            if cli.find('clid=') > -1:
-                c.clid = cli.replace("clid=","")
-            if cli.find('cid=') > -1:
-                c.cid = cli.replace("cid=","")
-                
-            clist.append(c)
-        
-        #get all clients servergroups, and away status
-        for cli in clientlist:
-            #send clientinfo command and get the output
-            tn.write("clientinfo clid=" + cli.clid + "\n")
-            msg = tn.read_until(accepted, 2)
-            
-            msg = msg.replace(accepted, "") #remove accepted message
-            msg = msg.replace("\n\r", "")   #remove line breaks
-            msg = msg.split(' ')
-            
+        for c in msg:
+            if c.find('clid=') > -1:
+                clist.append(c.replace('clid=',''))
         return clist
         
-        
-    def idletime(self, client):
+
+    def clientinfo(self, client):
         #send clientinfo command and get the output
-        tn.write("clientinfo clid=" + client + "\n")
-        msg = tn.read_until(accepted, 2)
-        
-        msg = msg.replace(accepted, "") #remove accepted message
+        self.tn.write("clientinfo clid=" + client + "\n")
+        msg = self.tn.read_until(self.accepted, 2)
+             
+        msg = msg.replace(self.accepted, "") #remove accepted message
         msg = msg.replace("\n\r", "")   #remove line breaks
         msg = msg.split(' ')
         
+        c = TS3Client()
+        
+        c.clid = client
         #find the client idle time
-        for idletime in msg:
-            if idletime.find("client_idle_time=") > -1:
-                idletime = idletime.replace("client_idle_time=", "")
-                break
-            else:
-                idletime = -1
+        for m in msg:
+            if m.find('cid=') > -1:
+                c.cid = m.replace('cid=','')
                 
-        return int(idletime)
+            if m.find('client_idle_time=') > -1:
+                c.idletime = int(m.replace('client_idle_time=','')) / 60000
+                
+            if m.find('client_servergroups=') > -1:
+                c.servergroups = m.replace('client_servergroups=','').split(',')
+                
+            if m.find('client_away=') > -1:
+                c.away = m.replace('client_away=','')
+        return c
         
         
-    def move(self, client):
-        cid = Config.get('config', 'afk_channel_id')
-        tn.write("clientmove clid=" + client + " cid=" + cid)
-        tn.read_until(accepted, 2)
-        sys.stdout.write("/n/ruser moved")
-
-
-        
-        
+    def move(self, client, idle_channel):
+        self.tn.write("clientmove clid=" + client + " cid=" + idle_channel + "\n")
+        self.tn.read_until(self.accepted, 2)
         

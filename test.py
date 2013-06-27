@@ -1,9 +1,8 @@
-class foo(object):
-    oioi = -1
+import teamspeak
 
 if __name__ == '__main__':
-    cli = foo()
-    cli.asdf = 123
+    cli = tsclient.tsclient()
+    ts = teamspeak.TS3()
     
-    print cli.asdf
-    print cli.oioi
+    print dir(ts)
+    print dir(cli)
