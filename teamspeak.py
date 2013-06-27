@@ -17,27 +17,23 @@ class TS3():
         tn = self.tn
         
         tn.open(Host, Port)
-        msg = tn.read_until(".", 2) #wait until the welcome message is displayed
-        sys.stdout.write(msg)       #print the welcome message
+        tn.read_until(".", 2) #wait until the welcome message is displayed
         
         tn.write("login " + User + " " + Pass + "\n")   #send login string
         msg = tn.read_until(accepted, 2)                #wait for login to be accepted or denied
         
-        if msg == accepted:                         #if login is accepted
-            sys.stdout.write(msg.replace("\s"," ")) #output message to console
-            tn.write("use " + VSID + "\n")           #select the virtual server
+        #if login is accepted select the virtual server
+        if msg == accepted:
+            tn.write("use " + VSID + "\n")
             msg = tn.read_until(accepted, 2)
             
             #if command is not accepted disconnect and return false
             if msg != accepted:
-                sys.stdout.write("\n\rError selecting virtual server " + VSID)
+                print "\n\rError selecting virtual server " + VSID
                 tn.write("logout\n")
                 tn.read_until(accepted, 2)
                 tn.write("quit\n")
                 return False
-            
-            #if virtual server is successfully selected print message to screen
-            sys.stdout.write(msg.replace("\s"," "))
             return True
         else:
             sys.stdout.write("\r\nError logging in. Please check your username and password.")

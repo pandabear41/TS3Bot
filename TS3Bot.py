@@ -18,7 +18,7 @@ class cfg():
     afk_channel = ''
     
 def ReadConfig():
-    Config = ConfigParser.RawConfigParser(allow_no_value=False)
+    Config = ConfigParser.RawConfigParser(allow_no_value=True)
     Config.read('config.ini')
     
     cfg.sq_user = Config.get('config', 'server_query_user')
@@ -31,8 +31,6 @@ def ReadConfig():
     
 def main_loop():
     ReadConfig()
-    print cfg.afk_channel
-    
     ts = teamspeak.TS3()
     ts.connect(cfg.sq_user, cfg.sq_pass, cfg.server_address, cfg.sq_port, cfg.vsid)
     
