@@ -7,6 +7,12 @@ accepted = "\n\rerror id=0 msg=ok"
 Config = ConfigParser.RawConfigParser(allow_no_value=False)
 Config.read('config.ini')
 
+class tsclient(object):
+    clid = -1            #client id            (based on connection order)
+    cid = -1             #channel id           (current channel id)
+    servergroups = -1    #client_servergroups  (2,3,8)
+    away = -1            #client_away          (0|1)
+
 class TS3():
     def connect(self):  
         #Read config properties
@@ -59,11 +65,28 @@ class TS3():
         msg = msg.split(' ')
         
         clist = []
-        #get all client ids
-        for client in msg:
-            if client.find('clid=') > -1:
-                clist.append(client.replace("clid=", ""))
+        
+        #get all client ids and current channel ids
+        for cli in msg:
+            c = tsclient()
+            
+            if cli.find('clid=') > -1:
+                c.clid = cli.replace("clid=","")
+            if cli.find('cid=') > -1:
+                c.cid = cli.replace("cid=","")
                 
+            clist.append(c)
+        
+        #get all clients servergroups, and away status
+        for cli in clientlist:
+            #send clientinfo command and get the output
+            tn.write("clientinfo clid=" + cli.clid + "\n")
+            msg = tn.read_until(accepted, 2)
+            
+            msg = msg.replace(accepted, "") #remove accepted message
+            msg = msg.replace("\n\r", "")   #remove line breaks
+            msg = msg.split(' ')
+            
         return clist
         
         
@@ -92,8 +115,8 @@ class TS3():
         tn.write("clientmove clid=" + client + " cid=" + cid)
         tn.read_until(accepted, 2)
         sys.stdout.write("/n/ruser moved")
-        
-        
+
+
         
         
         
