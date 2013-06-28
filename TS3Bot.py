@@ -17,6 +17,7 @@ class cfg():
     vsid = None
     idle_cid = None
     update_interval = None
+    ignore_group = None
     
 def ReadConfig():
     Config = ConfigParser.RawConfigParser(allow_no_value=False)
@@ -30,6 +31,7 @@ def ReadConfig():
     conf.vsid = Config.get('config', 'virtualserver_id')
     conf.idle_cid = Config.get('config', 'idle_channel_id')
     conf.update_interval = int(Config.get('config', 'update_interval'))
+    conf.ignore_group = Config.get('config', 'ignore_group')
     return conf
     
 def main_loop():
@@ -43,9 +45,14 @@ def main_loop():
         if seconds == 0:
             clist = ts.clientlist()
             for c in clist:
+                move = True
                 client = ts.clientinfo(c)
                 if client.idletime >= 180 and client.cid != cfg.idle_cid and client.type != '1':
-                    ts.move(c, conf.idle_cid)
+                    for i in client.servergroups:
+                        if i == conf.ignore_group:
+                            move = False
+                    if move == True:
+                        ts.move(c, conf.idle_cid)
 
         time.sleep(0.1)
            

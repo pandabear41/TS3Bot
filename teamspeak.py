@@ -2,12 +2,13 @@ import telnetlib
 import sys
     
 class TS3Client():
-    clid = '0'             #client id            (based on connection order)
-    cid = '0'              #channel id           (current channel id)
-    idletime = 0           #client idle time     (milliseconds)
-    away = '0'             #client_away          (0|1)
+    clid = None             #client id            (based on connection order)
+    cid = None              #channel id           (current channel id)
+    idletime = None           #client idle time     (milliseconds)
+    away = None             #client_away          (0|1)
     servergroups = []      #client_servergroups  (2,3,8)
-    type = '0'             #client_type          (0 = normal|1 = serverquery)
+    type = None             #client_type          (0 = normal|1 = serverquery)
+    name = None
     
 class TS3():
     tn = telnetlib.Telnet()
@@ -84,6 +85,10 @@ class TS3():
                 
             if m.find('client_away=') > -1:
                 c.away = m.replace('client_away=','')
+                continue
+            
+            if m.find('client_nickname=') > -1:
+                c.name = m.replace('client_nickname=','')
                 continue
                 
             if m.find('client_type=') > -1:
